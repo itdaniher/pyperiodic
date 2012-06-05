@@ -5,6 +5,7 @@ import re
 from collections import OrderedDict
 import json
 import gzip
+from pprint import pformat 
 
 # select the first table from the NIST "Ground levels and ionization energies for the neutral atoms" datasite
 t = BeautifulSoup(urlopen("http://physics.nist.gov/PhysRefData/IonEnergy/tblNew.html")).findAll("table")[1]
@@ -74,4 +75,8 @@ for element in t:
 	element[-1] = electrons[element[1]]
 	periodic[element[1]] = {"atomicNumber":int(element[0]), "symbol":element[1], "name":element[2], "electrons":element[-1]} 
 
+# dump atomic dictionary to a gzip'ed JSON file
 gzip.open("periodicTable_complete.json.gz", 'w').write(json.dumps(periodic, indent=1))
+
+# pprint atomic dictionary to plaintext
+open("periodicTable_complete.txt", 'w').write(pformat(periodic))
