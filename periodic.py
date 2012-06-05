@@ -34,22 +34,33 @@ def configurationRearranger(row):
 t = [configurationRearranger(row) for row in t]
 
 # turn a list of dictionaries into a dictionary
-superdict = lambda l: reduce(lambda a,b: a.update(b) or a, l, {})
+superdict = lambda l: reduce(lambda a,b: a.update(b) or a, l, OrderedDict())
 
 electrons = superdict([item[-1] for item in t])
 
 # turn an uneven list of lists into a list without decomposing strings
 flatten = lambda l: list(itertools.chain(*[[x] if type(x) in [str, unicode] else x for x in l]))
+
 for key in electrons.keys():
 	def unstuff():
 		""" recursive function to replace element notation for electron orbital configurations with the configuration, explicitly """
+		# remove empty values
 		electrons[key] = [ item for item in electrons[key] if item != '' ]
+		# strip brackets from first values
 		electrons[key][0] = electrons[key][0].strip('[]')
+		# see if first value is the name of an element in 'electrons'
 		if electrons[key][0] in electrons.keys():
+			# if so, replace with the electron configuration of that element
 			electrons[key][0] = electrons[electrons[key][0]]
+			# flatten
 			electrons[key] = flatten(electrons[key])
+			# repeat
 			unstuff()
 	unstuff()
-	dontAssume = lambda l: [x+'1' if x[-1] in ['s','p','d', 'f'] else x for x in l]
+	# default formatting assumes that if no number listed, it's '1' - not good practice
+	dontAssume = lambda l: [x+'1' if x[-1] in ['s', 'p', 'd', 'f'] else x for x in l]
 	electrons[key] = dontAssume(electrons[key])
+
+for key in electrons.keys():
+	# replace list of strings with an ordered dictionary
 	electrons[key] = OrderedDict([(orbital[0:-1],int(orbital[-1])) for orbital in electrons[key]])
