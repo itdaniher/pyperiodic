@@ -1,7 +1,10 @@
 from bs4 import BeautifulSoup
 from urllib2 import urlopen
 import itertools
+import re
 from collections import OrderedDict
+import json
+import gzip
 
 # select the first table from the NIST "Ground levels and ionization energies for the neutral atoms" datasite
 t = BeautifulSoup(urlopen("http://physics.nist.gov/PhysRefData/IonEnergy/tblNew.html")).findAll("table")[1]
@@ -63,4 +66,12 @@ for key in electrons.keys():
 
 for key in electrons.keys():
 	# replace list of strings with an ordered dictionary
-	electrons[key] = OrderedDict([(orbital[0:-1],int(orbital[-1])) for orbital in electrons[key]])
+	electrons[key] = ([(''.join(re.split("([sdfp])",orbital)[0:-1]),int(re.split("([sdfp])",orbital)[-1])) for orbital in electrons[key]])
+
+periodic = {}
+
+for element in t:
+	element[-1] = electrons[element[1]]
+	periodic[element[1]] = {"atomicNumber":int(element[0]), "symbol":element[1], "name":element[2], "electrons":element[-1]} 
+
+gzip.open("periodicTable_complete.json.gz", 'w').write(json.dumps(periodic, indent=1))
