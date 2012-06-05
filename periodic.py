@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from urllib2 import urlopen
+import itertools
 
 # select the first table from the NIST "Ground levels and ionization energies for the neutral atoms" datasite
 t = BeautifulSoup(urlopen("http://physics.nist.gov/PhysRefData/IonEnergy/tblNew.html")).findAll("table")[1]
@@ -29,4 +30,16 @@ def configurationRearranger(row):
 
 t = [configurationRearranger(row) for row in t]
 
+electrons = reduce(lambda a,b: a.update(b) or a, [item[-1] for item in t], {})
 
+flatten = lambda l: list(itertools.chain(*[[x] if type(x) in [str, unicode] else x for x in l]))
+
+for key in electrons.keys():
+	def unstuff():
+		electrons[key] = [ item for item in electrons[key] if item != '' ]
+		electrons[key][0] = electrons[key][0].strip('[]')
+		if electrons[key][0] in electrons.keys():
+			electrons[key][0] = electrons[electrons[key][0]]
+			electrons[key] = flatten(electrons[key])
+			unstuff()
+	unstuff()
