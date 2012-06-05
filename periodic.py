@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from urllib2 import urlopen
 import itertools
+from collections import OrderedDict
 
 # select the first table from the NIST "Ground levels and ionization energies for the neutral atoms" datasite
 t = BeautifulSoup(urlopen("http://physics.nist.gov/PhysRefData/IonEnergy/tblNew.html")).findAll("table")[1]
@@ -20,6 +21,8 @@ del t[0][10]
 t[90] = [u'91', u'Pa', u'Protactinium', u'[Rn]', u'5f2', u'6d1', u'7s2', u'',  u'(4,3/2)11/2', u'5.89  ', u'Sugar (1974)']
 t[91] = [u'92', u'U', u'Uranium', u'[Rn]', u'5f3', u'6d1', u'7s2', u'', u'(9/2,3/2)o6', u'6.1939', u'(1997), (2001)']
 t[92] = [u'93', u'Np', u'Neptunium', u'[Rn]', u'5f4', u'6d1', u'7s2', u'', u'(4,3/2)11/2', u'6.2657', u'(1979), (1994), (1997)']
+t[102] = [u'103', u'Lr', u'Lawrencium', u'[Rn]', u'5f14', u'', u'7s2', u'7p', u'2Po1/2?', u'4.9? ', u'Eliav et al. (1995)']
+t[103] = [u'104', u'Rf', u'Rutherfordium', u'[Rn]', u'5f14', u'6d2', u'7s2', u'', u'3F2?', u'6.0? ', u'Eliav et al. (1995)']
 
 # bit of hacking to put electron configuration information in an array as the key of a dictionary at the end of the list
 def configurationRearranger(row):
@@ -30,12 +33,16 @@ def configurationRearranger(row):
 
 t = [configurationRearranger(row) for row in t]
 
-electrons = reduce(lambda a,b: a.update(b) or a, [item[-1] for item in t], {})
+# turn a list of dictionaries into a dictionary
+superdict = lambda l: reduce(lambda a,b: a.update(b) or a, l, {})
 
+electrons = superdict([item[-1] for item in t])
+
+# turn an uneven list of lists into a list without decomposing strings
 flatten = lambda l: list(itertools.chain(*[[x] if type(x) in [str, unicode] else x for x in l]))
-
 for key in electrons.keys():
 	def unstuff():
+		""" recursive function to replace element notation for electron orbital configurations with the configuration, explicitly """
 		electrons[key] = [ item for item in electrons[key] if item != '' ]
 		electrons[key][0] = electrons[key][0].strip('[]')
 		if electrons[key][0] in electrons.keys():
@@ -43,8 +50,6 @@ for key in electrons.keys():
 			electrons[key] = flatten(electrons[key])
 			unstuff()
 	unstuff()
-	try:
-		int(electrons[key][-1][-1])
-	except ValueError:
-		electrons[key][-1] = electrons[key][-1]+'1'
-
+	dontAssume = lambda l: [x+'1' if x[-1] in ['s','p','d', 'f'] else x for x in l]
+	electrons[key] = dontAssume(electrons[key])
+	electrons[key] = OrderedDict([(orbital[0:-1],int(orbital[-1])) for orbital in electrons[key]])
