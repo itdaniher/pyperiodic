@@ -43,3 +43,8 @@ for key in electrons.keys():
 			electrons[key] = flatten(electrons[key])
 			unstuff()
 	unstuff()
+	try:
+		int(electrons[key][-1][-1])
+	except ValueError:
+		electrons[key][-1] = electrons[key][-1]+'1'
+
