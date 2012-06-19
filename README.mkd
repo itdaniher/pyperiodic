@@ -1,0 +1,3 @@
+I couldn't find any suckless periodic tables with reputable sources and atomic orbital configuration, so I made one.
+
+YMMV, consider this a work in progress.
